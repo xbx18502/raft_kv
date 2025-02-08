@@ -1,0 +1,11 @@
+# java target and class file
+raft-java-core/target/
+raft-java-example/target/
+raft-java-admin/target/
+raft-java-example/env/
+
+*.class
+*.jar
+*.war
+*.ear
+*.log
