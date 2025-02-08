@@ -6,7 +6,60 @@ Raft implementation library for Java.<br>
 * snapshot
 * 集群成员动态更变
 
+# Supported functions
+* Leader election
+* Log replication
+* Snapshot
+* Dynamic changes of cluster members
+
 ## Quick Start
+
+Deploy through Docker: <br>
+```
+docker pull --platform linux/amd64 ubuntu:24.04 <br>
+
+docker run --platform linux/amd64 \
+    -v /Users/peixinxiao/code/raft:/mnt \
+    -w /mnt \
+    -p 8051-8053:8051-8053 \
+    -it --name raft-container ubuntu:24.04 bash
+
+docker exec -it <container-name> bash
+
+# install dependencies
+
+#install maven
+apt update
+apt install maven -y
+
+#install openjdk8
+# Install OpenJDK 8
+apt-get update
+apt-get install -y openjdk-8-jdk
+
+# List installed Java versions
+update-alternatives --list java
+
+# Configure Java version priority
+update-alternatives --config java
+
+#install protobuf compiler
+apt install protobuf-compiler
+
+# save container to new image
+
+exit
+docker commit raft-container raft-image:v1
+
+# launch new container with new image
+
+docker run --platform linux/amd64 \
+    -v /Users/peixinxiao/code/raft:/mnt \
+    -w /mnt \
+    -p 8051-8053:8051-8053 \
+    -it --name raft-container-v1 raft-image:v1 bash 
+
+```
 在本地单机上部署一套3实例的raft集群，执行如下脚本：<br>
 cd raft-java-example && sh deploy.sh <br>
 该脚本会在raft-java-example/env目录部署三个实例example1、example2、example3；<br>
