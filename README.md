@@ -16,7 +16,7 @@ Raft implementation library for Java.<br>
 
 Deploy through Docker: <br>
 ```
-docker pull --platform linux/amd64 ubuntu:24.04 <br>
+docker pull --platform linux/amd64 ubuntu:24.04 
 
 docker run --platform linux/amd64 \
     -v /Users/peixinxiao/code/raft:/mnt \
@@ -31,6 +31,8 @@ docker exec -it <container-name> bash
 #install maven
 apt update
 apt install maven -y
+mvn --version
+Apache Maven 3.8.7
 
 #install openjdk8
 # Install OpenJDK 8
@@ -42,9 +44,13 @@ update-alternatives --list java
 
 # Configure Java version priority
 update-alternatives --config java
+java -version
+openjdk version "1.8.0_442"
 
 #install protobuf compiler
 apt install protobuf-compiler
+protoc --version
+libprotoc 3.21.12
 
 # save container to new image
 
