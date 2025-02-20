@@ -9,3 +9,6 @@ raft-java-example/env/
 *.war
 *.ear
 *.log
+
+# ignore .DS_Store
+**/.DS_Store

@@ -61,7 +61,9 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
             raftNode.getLock().unlock();
         }
     }
-
+    /*
+     * 判断是否应该给candidate选票，返回是否给这个candidate投票
+     */
     @Override
     public RaftProto.VoteResponse requestVote(RaftProto.VoteRequest request) {
         raftNode.getLock().lock();
@@ -75,9 +77,11 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
             if (request.getTerm() < raftNode.getCurrentTerm()) {
                 return responseBuilder.build();
             }
+            // 如果candidate的term比自己大，自己就变成follower
             if (request.getTerm() > raftNode.getCurrentTerm()) {
                 raftNode.stepDown(request.getTerm());
             }
+            // judge if peer has newer term than me or has the same term but longer log
             boolean logIsOk = request.getLastLogTerm() > raftNode.getLastLogTerm()
                     || (request.getLastLogTerm() == raftNode.getLastLogTerm()
                     && request.getLastLogIndex() >= raftNode.getRaftLog().getLastLogIndex());
@@ -97,7 +101,9 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
             raftNode.getLock().unlock();
         }
     }
-
+    /*
+     * 根据日志结构判断此次请求是否合法，如果合法则将日志追加到日志中
+     */
     @Override
     public RaftProto.AppendEntriesResponse appendEntries(RaftProto.AppendEntriesRequest request) {
         raftNode.getLock().lock();
@@ -107,16 +113,20 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
             responseBuilder.setTerm(raftNode.getCurrentTerm());
             responseBuilder.setResCode(RaftProto.ResCode.RES_CODE_FAIL);
             responseBuilder.setLastLogIndex(raftNode.getRaftLog().getLastLogIndex());
+            // 如果请求的term比自己的term小，直接返回
             if (request.getTerm() < raftNode.getCurrentTerm()) {
                 return responseBuilder.build();
             }
+            // 如果请求的term比自己的term大，自己变成follower
             raftNode.stepDown(request.getTerm());
+            // 如果自己还没有leader，就把leader设置为给自己发请求的peer
             if (raftNode.getLeaderId() == 0) {
                 raftNode.setLeaderId(request.getServerId());
                 LOG.info("new leaderId={}, conf={}",
                         raftNode.getLeaderId(),
                         PRINTER.printToString(raftNode.getConfiguration()));
             }
+            // 如果给自己的发请求的peer不是leader，就将term+1, 并返回
             if (raftNode.getLeaderId() != request.getServerId()) {
                 LOG.warn("Another peer={} declares that it is the leader " +
                                 "at term={} which was occupied by leader={}",
@@ -126,13 +136,14 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
                 responseBuilder.setTerm(request.getTerm() + 1);
                 return responseBuilder.build();
             }
-
+            // 如果请求的prevLogIndex比自己的lastLogIndex大，说明有日志缺失，返回
             if (request.getPrevLogIndex() > raftNode.getRaftLog().getLastLogIndex()) {
                 LOG.info("Rejecting AppendEntries RPC would leave gap, " +
                         "request prevLogIndex={}, my lastLogIndex={}",
                         request.getPrevLogIndex(), raftNode.getRaftLog().getLastLogIndex());
                 return responseBuilder.build();
             }
+            // 如果请求的prevLogIndex比自己的firstLogIndex小，说明有日志冲突，返回
             if (request.getPrevLogIndex() >= raftNode.getRaftLog().getFirstLogIndex()
                     && raftNode.getRaftLog().getEntryTerm(request.getPrevLogIndex())
                     != request.getPrevLogTerm()) {
@@ -144,7 +155,7 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
                 responseBuilder.setLastLogIndex(request.getPrevLogIndex() - 1);
                 return responseBuilder.build();
             }
-
+            // 如果这是一个心跳请求，直接返回
             if (request.getEntriesCount() == 0) {
                 LOG.debug("heartbeat request from peer={} at term={}, my term={}",
                         request.getServerId(), request.getTerm(), raftNode.getCurrentTerm());
@@ -154,7 +165,7 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
                 advanceCommitIndex(request);
                 return responseBuilder.build();
             }
-
+            // 如果这是一个日志追加请求，将日志追加到日志中
             responseBuilder.setResCode(RaftProto.ResCode.RES_CODE_SUCCESS);
             List<RaftProto.LogEntry> entries = new ArrayList<>();
             long index = request.getPrevLogIndex();
@@ -163,6 +174,7 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
                 if (index < raftNode.getRaftLog().getFirstLogIndex()) {
                     continue;
                 }
+                // 如果日志已经存在，且term相同，跳过
                 if (raftNode.getRaftLog().getLastLogIndex() >= index) {
                     if (raftNode.getRaftLog().getEntryTerm(index) == entry.getTerm()) {
                         continue;
@@ -173,6 +185,7 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
                 }
                 entries.add(entry);
             }
+            // append entries
             raftNode.getRaftLog().append(entries);
 //            raftNode.getRaftLog().updateMetaData(raftNode.getCurrentTerm(),
 //                    null, raftNode.getRaftLog().getFirstLogIndex());

@@ -6,6 +6,7 @@ import com.github.raftimpl.raft.RaftNode;
 import com.github.raftimpl.raft.RaftOptions;
 import com.github.raftimpl.raft.StateMachine;
 import com.github.raftimpl.raft.example.server.machine.LevelDBStateMachine;
+import com.github.raftimpl.raft.example.server.machine.RocksDBStateMachine;
 import com.github.raftimpl.raft.example.server.service.ExampleService;
 import com.github.raftimpl.raft.example.server.service.impl.ExampleServiceImpl;
 import com.github.raftimpl.raft.proto.RaftProto;
@@ -55,8 +56,9 @@ public class ServerMain {
         raftOptions.setMaxSegmentFileSize(1024 * 1024);
         // 应用状态机
         StateMachine stateMachine =
+        new RocksDBStateMachine(raftOptions.getDataDir());
         //    new HashMapStateMachine(raftOptions.getDataDir());
-                new LevelDBStateMachine(raftOptions.getDataDir());
+        //        new LevelDBStateMachine(raftOptions.getDataDir());
 //                new BTreeStateMachine(raftOptions.getDataDir());
 //                new BitCaskStateMachine(raftOptions.getDataDir());
         // 初始化RaftNode
