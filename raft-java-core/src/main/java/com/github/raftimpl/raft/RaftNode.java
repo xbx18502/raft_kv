@@ -141,6 +141,9 @@ public class RaftNode {
     }
 
     // client set command
+    /**
+     * leader node write entry to local log, and replicate to followers
+     */
     public boolean replicate(byte[] data, RaftProto.EntryType entryType) {
         lock.lock();
         long newLastLogIndex = 0;
@@ -192,7 +195,9 @@ public class RaftNode {
         }
         return true;
     }
-
+    /**
+     * leader node send request to peer
+     */
     public boolean appendEntries(Peer peer) {
         RaftProto.AppendEntriesRequest.Builder requestBuilder = RaftProto.AppendEntriesRequest.newBuilder();
         long prevLogIndex;
@@ -332,6 +337,10 @@ public class RaftNode {
                 if (raftLog.getTotalSize() < raftOptions.getSnapshotMinLogSize()) {
                     return;
                 }
+                /**
+                 * 如果当前节点的lastAppliedIndex小于等于snapshot的lastIncludedIndex，
+                 * 则不需要再次生成snapshot
+                 */
                 if (lastAppliedIndex <= snapshot.getMetaData().getLastIncludedIndex()) {
                     return;
                 }

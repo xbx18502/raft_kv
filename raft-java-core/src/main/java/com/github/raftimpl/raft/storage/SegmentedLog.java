@@ -160,7 +160,9 @@ public class SegmentedLog {
         }
         return newLastLogIndex;
     }
-
+/**
+ * trucate prefix of log: delete log entries whose index is less than newFirstIndex
+ */
     public void truncatePrefix(long newFirstIndex) {
         if (newFirstIndex <= getFirstLogIndex()) {
             return;

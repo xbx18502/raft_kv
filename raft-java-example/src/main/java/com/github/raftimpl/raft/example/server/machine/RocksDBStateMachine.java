@@ -47,7 +47,7 @@ public class RocksDBStateMachine implements StateMachine {
         // 构造RocksDB的Checkpoint
         Checkpoint checkpoint = Checkpoint.create(db);
         try {
-            checkpoint.createCheckpoint(snapshotDir);
+            checkpoint.createCheckpoint(tmpSnapshotDataDir);
             LOG.info("Checkpoint was created");
         } catch (Exception e) {
             LOG.warn("writeSnapshot meet exception, dir={}, msg={}",
